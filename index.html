@@ -603,7 +603,20 @@ for(let m=360; m<1440; m+=30){ SETUP_SLOTS.push([m, m+30]); }
 
 const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-function dateKey(d){ return d.toISOString().slice(0,10); }
+function dateKey(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+// Parses a "YYYY-MM-DD" key back into a local-time Date object at midnight.
+// (new Date("YYYY-MM-DD") parses as UTC midnight, which shifts the day
+// backwards for any timezone ahead of UTC - this avoids that bug.)
+function parseDateKey(key){
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
 function fmtShort(d){ return `${DAY_NAMES[d.getDay()].slice(0,3)} ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`; }
 
 // ---- App state ----
@@ -709,7 +722,7 @@ function loadFromLocalStorage(){
 function isDayComplete(key){
   const entry = daysLog[key];
   if(!entry) return false;
-  const d = new Date(key);
+  const d = parseDateKey(key);
   const required = tasksForDay(d.getDay());
   if(required.length === 0) return true;
   return required.every(t => entry.tasks[t.id]);
@@ -733,8 +746,8 @@ function runRollover(){
     return;
   }
   if(lastActiveDateKey !== nowKey){
-    let cursor = new Date(lastActiveDateKey);
-    const stop = new Date(nowKey);
+    let cursor = parseDateKey(lastActiveDateKey);
+    const stop = parseDateKey(nowKey);
     while(dateKey(cursor) !== dateKey(stop)){
       finalizeDayIfNeeded(dateKey(cursor));
       cursor.setDate(cursor.getDate()+1);
@@ -820,7 +833,7 @@ function computeStreak(){
 function pruneMissedQueue(){
   const now = new Date();
   missedQueue = missedQueue.filter(key=>{
-    const d = new Date(key);
+    const d = parseDateKey(key);
     const diffDays = Math.floor((now - d) / 86400000);
     return diffDays <= 30;
   });
@@ -1163,7 +1176,7 @@ function setMoreDay(d){
 }
 
 function currentElapsedDays(task){
-  const start = new Date(task.startDate);
+  const start = parseDateKey(task.startDate);
   const diff = Math.floor((new Date() - start) / 86400000) + 1;
   return diff;
 }
@@ -1184,7 +1197,7 @@ function formatDMY(date){
 }
 
 function dateForDayNumber(startDateStr, dayNum){
-  const d = new Date(startDateStr);
+  const d = parseDateKey(startDateStr);
   d.setDate(d.getDate() + (dayNum - 1));
   return d;
 }
@@ -1241,7 +1254,7 @@ function render(){
   const todayDayTasks = tasksForDay(now.getDay());
   const streak = computeStreak();
   const catchupKey = (missedQueue.length>0 && tokensLeft>0) ? missedQueue[0] : null;
-  const catchupDate = catchupKey ? new Date(catchupKey) : null;
+  const catchupDate = catchupKey ? parseDateKey(catchupKey) : null;
   const catchupTasks = catchupKey ? tasksForDay(catchupDate.getDay()) : [];
 
   const historyEntries = Object.keys(daysLog).sort().reverse().slice(0,14);
@@ -1333,7 +1346,7 @@ function render(){
   } else {
     pastEntries.forEach(key=>{
       const status = finalizedStatus[key] || 'pending';
-      const d = new Date(key);
+      const d = parseDateKey(key);
       const iconMap = { completed:'\u2713', restored:'\u21BB', missed:'\u2715', pending:'\u2026' };
       const labelMap = { completed:'Completed', restored:'Restored (token used)', missed:'Missed', pending:'Pending' };
       const row = document.createElement('div');
