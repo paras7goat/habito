@@ -843,7 +843,7 @@ function pruneMissedQueue(){
 function checkImmediateCatchup(){
   if(missedQueue.length === 0 || tokensLeft <= 0) return;
   const catchupKey = missedQueue[0];
-  if(finalizedStatus[catchupKey]){ missedQueue.shift(); return; }
+  if(finalizedStatus[catchupKey] === 'restored'){ missedQueue.shift(); return; }
   const nowKey = todayKeyNow();
   if(isDayComplete(catchupKey) && isDayComplete(nowKey)){
     finalizedStatus[catchupKey] = 'restored';
