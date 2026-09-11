@@ -1,0 +1,2233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Build Log</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d2338">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-deep:#0d2338;
+    --navy-panel:#123253;
+    --navy-panel-2:#0f2b47;
+    --line-cyan:#3f6f92;
+    --line-cyan-soft:rgba(127,179,213,0.18);
+    --text-primary:#eaf2f8;
+    --text-muted:#8fadc4;
+    --amber:#e8a33d;
+    --green:#5fad8c;
+    --red-stamp:#c9524a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      linear-gradient(var(--line-cyan-soft) 1px, transparent 1px) 0 0/28px 28px,
+      linear-gradient(90deg, var(--line-cyan-soft) 1px, transparent 1px) 0 0/28px 28px,
+      var(--navy-deep);
+    font-family:'Inter', sans-serif;
+    color:var(--text-primary);
+    padding:20px 12px 60px;
+    display:flex;
+    justify-content:center;
+  }
+  .sheet{ width:100%; max-width:460px; }
+  .proto-badge{
+    display:inline-block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:2px;
+    color:var(--navy-deep);
+    background:var(--amber);
+    padding:3px 8px;
+    margin-bottom:8px;
+  }
+  .controls{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:12px;
+  }
+  .btn{
+    flex:1;
+    min-width:90px;
+    font-family:'Rajdhani', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    padding:10px 8px;
+    border:1px solid var(--line-cyan);
+    background:var(--navy-panel);
+    color:var(--text-primary);
+    cursor:pointer;
+    text-align:center;
+  }
+  .btn.primary{ background:var(--green); color:var(--navy-deep); border-color:var(--green); }
+  .btn.danger{ background:transparent; color:var(--text-muted); }
+  .btn:active{ transform:translateY(1px); }
+  .btn.badge-btn{ background:var(--navy-panel-2); color:var(--amber); border-color:var(--amber); }
+  .btn.tt-btn{ background:var(--navy-panel-2); color:#6fa8dc; border-color:#6fa8dc; }
+  .btn.gym-btn{ background:var(--navy-panel-2); color:var(--red-stamp); border-color:var(--red-stamp); }
+  .settings-wrap{ position:relative; }
+  .settings-gear{
+    flex:0 0 42px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px; cursor:pointer;
+    border:1px solid var(--line-cyan);
+    background:var(--navy-panel);
+  }
+  .settings-menu{
+    position:absolute; top:44px; right:0; z-index:60;
+    width:190px;
+    border:1px solid var(--amber);
+    background:var(--navy-panel);
+  }
+  .settings-item{
+    padding:10px 14px;
+    font-family:'Rajdhani', sans-serif; font-weight:600; font-size:13px;
+    border-bottom:1px solid var(--line-cyan-soft);
+    cursor:pointer;
+  }
+  .settings-item:last-child{ border-bottom:none; }
+  .settings-item:hover{ background:var(--navy-panel-2); }
+  .code-box{
+    width:100%; min-height:110px;
+    background:var(--navy-deep); border:1px solid var(--line-cyan);
+    color:var(--text-primary); font-family:'IBM Plex Mono', monospace; font-size:10.5px;
+    padding:8px; resize:vertical; word-break:break-all;
+  }
+  .setup-slot-row{
+    display:flex; align-items:center; gap:8px;
+    padding:5px 0; border-bottom:1px solid rgba(127,179,213,0.08);
+  }
+  .setup-slot-time{
+    flex:0 0 100px; font-family:'IBM Plex Mono', monospace; font-size:9.5px; color:var(--text-muted);
+  }
+  .setup-input{
+    flex:1; background:var(--navy-deep); border:1px solid var(--line-cyan);
+    color:var(--text-primary); font-family:'Inter', sans-serif; font-size:12.5px;
+    padding:6px 8px;
+  }
+  .setup-day-title-input{
+    width:100%; background:var(--navy-deep); border:1px solid var(--line-cyan);
+    color:var(--text-primary); font-family:'Rajdhani', sans-serif; font-weight:600; font-size:14px;
+    padding:8px; margin-bottom:10px;
+  }
+  .setup-gym-row{
+    display:flex; gap:6px; margin-bottom:6px;
+  }
+  .setup-gym-row .setup-input{ flex:1.4; }
+  .setup-gym-row .setup-input.detail{ flex:1; }
+  .block-controls{ display:flex; gap:8px; margin:10px 0; }
+  .block-controls .btn{ font-size:11px; padding:8px 6px; }
+  .rest-toggle-row{
+    display:flex; align-items:center; gap:8px; margin-bottom:10px;
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--text-muted);
+  }
+  .save-setup-btn{ margin-top:14px; }
+  .trash-row{ display:flex; justify-content:flex-end; margin-bottom:8px; }
+  .paste-parse-box{
+    margin-top:16px; padding-top:14px; border-top:1px solid var(--line-cyan-soft);
+  }
+  .paste-parse-box .section-label{ margin-bottom:8px; }
+  .sample-template{
+    background:var(--navy-deep); border:1px solid var(--line-cyan);
+    color:var(--text-muted); font-family:'IBM Plex Mono', monospace; font-size:9.5px;
+    padding:8px; white-space:pre-wrap; margin-bottom:8px; max-height:110px; overflow-y:auto;
+  }
+  .paste-parse-row{ display:flex; gap:8px; margin-bottom:8px; }
+  .paste-parse-row .btn{ flex:1; font-size:11px; padding:8px 6px; }
+  .gym-day-title{
+    font-family:'Rajdhani', sans-serif; font-weight:700; font-size:17px;
+    letter-spacing:0.5px; text-transform:uppercase; margin:0 0 10px; color:var(--red-stamp);
+  }
+  .gym-row{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    padding:9px 4px;
+    border-bottom:1px dashed var(--line-cyan-soft);
+  }
+  .gym-row:last-of-type{ border-bottom:none; }
+  .gym-name{
+    font-family:'Rajdhani', sans-serif; font-weight:600; font-size:14.5px;
+  }
+  .gym-detail{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--amber);
+    flex:0 0 auto; white-space:nowrap;
+  }
+  .edit-task-btn{
+    flex:0 0 auto; padding:4px; cursor:pointer; display:flex; align-items:center;
+  }
+  .pencil-icon{
+    width:13px; height:13px; opacity:0.38; transition:opacity .15s; color:var(--text-primary);
+  }
+  .edit-task-btn:active .pencil-icon{ opacity:0.7; }
+  .drag-handle{
+    flex:0 0 auto; padding:4px 6px; cursor:grab; color:var(--text-muted); opacity:0.4;
+    font-size:13px; letter-spacing:-1px; touch-action:none;
+  }
+  .todo-row[draggable="true"]{ cursor:grab; }
+  .todo-row.dragging{ opacity:0.35; }
+  .todo-row.drag-over-top{ border-top:2px solid var(--amber); }
+  .todo-row.drag-over-bottom{ border-bottom:2px solid var(--amber); }
+  .from-tt-heading{
+    margin-top:16px; padding-top:12px; border-top:1px solid var(--line-cyan-soft);
+  }
+  .from-tt-row .task-name{ color:var(--text-muted); }
+  .gym-finisher{
+    margin-top:10px; padding-top:10px; border-top:1px solid var(--line-cyan-soft);
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--text-muted);
+  }
+  .gym-rest{
+    text-align:center; padding:24px 0; color:var(--text-muted);
+    font-family:'Rajdhani', sans-serif; font-size:16px; font-weight:600;
+  }
+  .day-tabs{
+    display:flex; flex-wrap:wrap; gap:4px; margin-bottom:12px;
+  }
+  .day-tab{
+    flex:1; min-width:40px;
+    text-align:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.5px;
+    padding:6px 2px;
+    border:1px solid var(--line-cyan);
+    color:var(--text-muted);
+    cursor:pointer;
+    background:var(--navy-deep);
+  }
+  .day-tab.active{
+    background:#6fa8dc;
+    color:var(--navy-deep);
+    border-color:#6fa8dc;
+    font-weight:600;
+  }
+  .tt-row{
+    display:flex; align-items:center; gap:10px;
+    padding:9px 4px;
+    border-bottom:1px dashed var(--line-cyan-soft);
+  }
+  .tt-row:last-of-type{ border-bottom:none; }
+  .tt-dot{
+    flex:0 0 10px; width:10px; height:10px; border-radius:50%;
+  }
+  .tt-time{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color:var(--text-muted);
+    flex:0 0 118px;
+  }
+  .tt-activity{
+    font-family:'Rajdhani', sans-serif;
+    font-weight:600;
+    font-size:14px;
+  }
+  .modal-overlay{
+    position:fixed; inset:0;
+    background:rgba(6,16,26,0.82);
+    display:flex; align-items:center; justify-content:center;
+    z-index:50; padding:16px;
+  }
+  .modal-box{
+    width:100%; max-width:420px;
+    max-height:85vh;
+    overflow-y:auto;
+    border:1px solid var(--amber);
+    background:var(--navy-panel);
+  }
+  .modal-header{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 16px;
+    border-bottom:1px solid var(--line-cyan-soft);
+    background:var(--navy-panel-2);
+  }
+  .modal-header h2{
+    font-family:'Rajdhani', sans-serif; font-weight:700; font-size:18px;
+    letter-spacing:1px; text-transform:uppercase; margin:0; color:var(--amber);
+  }
+  .modal-close{
+    font-family:'IBM Plex Mono', monospace; font-size:14px; cursor:pointer;
+    color:var(--text-muted); border:1px solid var(--line-cyan); padding:2px 8px;
+  }
+  .modal-body{ padding:16px; }
+  .league-card{
+    border:1px solid var(--line-cyan);
+    padding:14px;
+    margin-bottom:16px;
+    text-align:center;
+    background:var(--navy-panel-2);
+  }
+  .league-name{
+    font-family:'Rajdhani', sans-serif; font-weight:700; font-size:26px;
+    letter-spacing:2px; text-transform:uppercase; margin:2px 0;
+  }
+  .league-sub{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--text-muted); }
+  .league-progress-track{
+    height:6px; background:var(--navy-deep); border:1px solid var(--line-cyan);
+    margin-top:10px; overflow:hidden;
+  }
+  .league-progress-fill{ height:100%; background:var(--amber); }
+  .best-streak-row{
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:'IBM Plex Mono', monospace; font-size:11px;
+    padding:8px 0; border-bottom:1px solid var(--line-cyan-soft); margin-bottom:12px;
+  }
+  .best-streak-row .num{ color:var(--green); font-size:15px; font-weight:600; }
+  .badges-grid{
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .badge-card{
+    display:flex; align-items:center; gap:10px;
+    border:1px solid var(--line-cyan);
+    padding:7px 10px;
+    background:var(--navy-panel-2);
+    width:100%;
+  }
+  .badge-card.unlocked{ border-color:var(--amber); background:rgba(232,163,61,0.1); }
+  .badge-card.locked{ opacity:0.38; }
+  .badge-emoji{ font-size:16px; flex:0 0 auto; }
+  .badge-text{ flex:1; display:flex; flex-direction:column; }
+  .badge-name{ font-family:'Rajdhani', sans-serif; font-weight:600; font-size:12.5px; }
+  .badge-card.unlocked .badge-name{ font-weight:700; }
+  .badge-threshold{ font-family:'IBM Plex Mono', monospace; font-size:9px; color:var(--text-muted); margin-top:1px; }
+  .league-pips{ font-size:14px; letter-spacing:1px; }
+  .divisions-table{
+    margin-top:12px; text-align:left;
+    border-top:1px solid var(--line-cyan-soft);
+    max-height:220px; overflow-y:auto;
+  }
+  .div-row{
+    display:flex; align-items:center; gap:8px;
+    padding:6px 2px;
+    border-bottom:1px solid rgba(127,179,213,0.08);
+    font-family:'IBM Plex Mono', monospace; font-size:11px;
+  }
+  .div-swatch{
+    flex:0 0 10px; width:10px; height:10px; border-radius:50%;
+  }
+  .div-name{ flex:1; font-family:'Rajdhani', sans-serif; font-weight:600; font-size:13px; }
+  .div-pips{ font-size:10px; letter-spacing:1px; }
+  .div-range{ color:var(--text-muted); flex:0 0 auto; }
+  .sheet-header{
+    border:1px solid var(--line-cyan);
+    border-bottom:none;
+    padding:14px 16px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    background:var(--navy-panel);
+  }
+  .title-block .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:2px;
+    color:var(--text-muted);
+    margin:0 0 2px;
+  }
+  .title-block h1{
+    font-family:'Rajdhani', sans-serif;
+    font-weight:700;
+    font-size:22px;
+    letter-spacing:1px;
+    margin:0;
+    text-transform:uppercase;
+  }
+  .date-block{ text-align:right; font-family:'IBM Plex Mono', monospace; }
+  .date-block .day{ font-size:14px; font-weight:600; color:var(--amber); }
+  .date-block .date{ font-size:11px; color:var(--text-muted); }
+  .stat-bar{
+    border:1px solid var(--line-cyan);
+    border-bottom:none;
+    background:var(--navy-panel-2);
+    padding:10px 16px;
+    display:flex;
+    justify-content:space-between;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+  }
+  .stat-bar .num{ color:var(--amber); font-weight:600; font-size:14px; }
+  .catchup-banner{
+    border:1px solid var(--amber);
+    background:rgba(232,163,61,0.1);
+    padding:12px 16px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--amber);
+    line-height:1.6;
+  }
+  .body-panel{
+    border:1px solid var(--line-cyan);
+    background:var(--navy-panel);
+    padding:16px;
+  }
+  .section-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:1.5px;
+    color:var(--text-muted);
+    margin:0 0 6px;
+  }
+  .task{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:11px 4px;
+    border-bottom:1px dashed var(--line-cyan-soft);
+    cursor:pointer;
+    user-select:none;
+  }
+  .task:last-of-type{ border-bottom:none; }
+  .checkbox{
+    flex:0 0 22px;
+    width:22px;
+    height:22px;
+    border:2px solid var(--line-cyan);
+    background:var(--navy-deep);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .checkbox svg{ width:14px; height:14px; opacity:0; transform:scale(0.5); transition:all .2s ease; }
+  .task.done .checkbox{ background:var(--green); border-color:var(--green); }
+  .task.done .checkbox svg{ opacity:1; transform:scale(1); }
+  .task-name{ font-family:'Rajdhani', sans-serif; font-weight:600; font-size:15px; }
+  .task.done .task-name{ color:var(--text-muted); text-decoration:line-through; text-decoration-color:var(--green); }
+  .catchup-block{ margin-top:14px; padding-top:12px; border-top:1px solid var(--line-cyan-soft); }
+  .history-log{
+    border:1px solid var(--line-cyan);
+    border-top:none;
+    background:var(--navy-panel-2);
+    padding:12px 16px;
+    max-height:180px;
+    overflow-y:auto;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+  }
+  .history-row{
+    display:flex;
+    justify-content:space-between;
+    padding:4px 0;
+    color:var(--text-muted);
+    border-bottom:1px solid rgba(127,179,213,0.08);
+  }
+  .history-row .icon.completed{ color:var(--green); }
+  .history-row .icon.restored{ color:var(--amber); }
+  .history-row .icon.missed{ color:var(--red-stamp); }
+  .history-row .icon.pending{ color:var(--text-muted); }
+  .footer-note{
+    border:1px solid var(--line-cyan);
+    border-top:none;
+    background:var(--navy-panel-2);
+    padding:12px 16px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    color:var(--text-muted);
+    line-height:1.6;
+  }
+</style>
+</head>
+<body>
+<div class="sheet" id="sheet"></div>
+
+<script>
+const BUFFER_LABELS = ['free time','buffer','rest','sleep','free / buffer',''];
+
+function slugify(str){
+  return str.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'') || 'task';
+}
+
+// Tasks are now derived dynamically from the timetable (custom or default), deduped per day,
+// plus any custom single/weekly tasks added via Setup New Task.
+function tasksForDay(dayIdx){
+  const slots = (customTimetable && customTimetable[dayIdx]) ? customTimetable[dayIdx] : defaultTimetableAsSlots(dayIdx);
+  const seen = new Set();
+  const tasks = [];
+  slots.forEach(label=>{
+    const trimmed = (label||'').trim();
+    const key = trimmed.toLowerCase();
+    if(trimmed && !BUFFER_LABELS.includes(key) && !seen.has(key)){
+      seen.add(key);
+      tasks.push({ id: slugify(trimmed), name: trimmed });
+    }
+  });
+  // NOTE: custom tasks (weekly/monthly) are DISPLAY ONLY, shown under "More" -
+  // they do not appear in the checklist unless the same activity is also typed
+  // directly into Setup My Schedule (the timetable).
+  return tasks;
+}
+
+const BADGES = [
+  { name:'Igniter',      threshold:5,    emoji:'\u{1F525}' },
+  { name:'Trailblazer',  threshold:15,   emoji:'\u{1F9ED}' },
+  { name:'Steadfast',    threshold:35,   emoji:'\u{1F6E1}\uFE0F' },
+  { name:'Resolute',     threshold:65,   emoji:'\u2693' },
+  { name:'Unbroken',     threshold:105,  emoji:'\u26D3\uFE0F' },
+  { name:'Vanguard',     threshold:155,  emoji:'\u{1F5E1}\uFE0F' },
+  { name:'Stalwart',     threshold:215,  emoji:'\u{1F3F0}' },
+  { name:'Valiant',      threshold:285,  emoji:'\u2694\uFE0F' },
+  { name:'Indomitable',  threshold:365,  emoji:'\u{1F981}' },
+  { name:'Relentless',   threshold:455,  emoji:'\u{1F32A}\uFE0F' },
+  { name:'Unyielding',   threshold:555,  emoji:'\u{1F5FF}' },
+  { name:'Fearless',     threshold:665,  emoji:'\u{1F985}' },
+  { name:'Undaunted',    threshold:785,  emoji:'\u26A1' },
+  { name:'Peerless',     threshold:915,  emoji:'\u{1F451}' },
+  { name:'Unconquered',  threshold:1055, emoji:'\u{1F3D4}\uFE0F' },
+  { name:'Everlasting',  threshold:1205, emoji:'\u267E\uFE0F' },
+  { name:'Immutable',    threshold:1365, emoji:'\u{1F48E}' },
+  { name:'Timeless',     threshold:1535, emoji:'\u{1F30C}' },
+  { name:'Boundless',    threshold:1715, emoji:'\u{1F320}' },
+  { name:'Paragon',      threshold:1905, emoji:'\u{1F31F}' },
+];
+
+// League system: tiers with divisions I/II/III (III = strongest within a tier). min inclusive, max exclusive.
+const LEAGUES = [
+  { name:'Unranked',       tier:'Unranked',    div:'',    min:0,    max:11,   color:'#8fadc4' },
+  { name:'Bronze I',       tier:'Bronze',      div:'I',   min:11,   max:26,   color:'#e3a97a' },
+  { name:'Bronze II',      tier:'Bronze',      div:'II',  min:26,   max:41,   color:'#cd7f32' },
+  { name:'Bronze III',     tier:'Bronze',      div:'III', min:41,   max:71,   color:'#8a5a22' },
+  { name:'Silver I',       tier:'Silver',      div:'I',   min:71,   max:101,  color:'#e0e0e0' },
+  { name:'Silver II',      tier:'Silver',      div:'II',  min:101,  max:151,  color:'#b8bcc0' },
+  { name:'Silver III',     tier:'Silver',      div:'III', min:151,  max:201,  color:'#888e94' },
+  { name:'Gold I',         tier:'Gold',        div:'I',   min:201,  max:251,  color:'#ffe066' },
+  { name:'Gold II',        tier:'Gold',        div:'II',  min:251,  max:301,  color:'#ffd700' },
+  { name:'Gold III',       tier:'Gold',        div:'III', min:301,  max:366,  color:'#d4af00' },
+  { name:'Platinum I',     tier:'Platinum',    div:'I',   min:366,  max:401,  color:'#c39bd3' },
+  { name:'Platinum II',    tier:'Platinum',    div:'II',  min:401,  max:451,  color:'#9b59b6' },
+  { name:'Platinum III',   tier:'Platinum',    div:'III', min:451,  max:501,  color:'#6c3483' },
+  { name:'Diamond I',      tier:'Diamond',     div:'I',   min:501,  max:561,  color:'#7ec8e3' },
+  { name:'Diamond II',     tier:'Diamond',     div:'II',  min:561,  max:621,  color:'#3498db' },
+  { name:'Diamond III',    tier:'Diamond',     div:'III', min:621,  max:671,  color:'#1b4f72' },
+  { name:'Mythic I',       tier:'Mythic',      div:'I',   min:671,  max:741,  color:'#d980c2' },
+  { name:'Mythic II',      tier:'Mythic',      div:'II',  min:741,  max:807,  color:'#a3336f' },
+  { name:'Mythic III',     tier:'Mythic',      div:'III', min:807,  max:873,  color:'#6b1f4a' },
+  { name:'Celestial I',    tier:'Celestial',   div:'I',   min:873,  max:941,  color:'#7fd4c9' },
+  { name:'Celestial II',   tier:'Celestial',   div:'II',  min:941,  max:1007, color:'#2a9d8f' },
+  { name:'Celestial III',  tier:'Celestial',   div:'III', min:1007, max:1073, color:'#14524a' },
+  { name:'Ascendant I',    tier:'Ascendant',   div:'I',   min:1073, max:1141, color:'#f5b971' },
+  { name:'Ascendant II',   tier:'Ascendant',   div:'II',  min:1141, max:1207, color:'#e08e2b' },
+  { name:'Ascendant III',  tier:'Ascendant',   div:'III', min:1207, max:1273, color:'#8f5713' },
+  { name:'Sovereign I',    tier:'Sovereign',   div:'I',   min:1273, max:1341, color:'#e17a7a' },
+  { name:'Sovereign II',   tier:'Sovereign',   div:'II',  min:1341, max:1407, color:'#c0392b' },
+  { name:'Sovereign III',  tier:'Sovereign',   div:'III', min:1407, max:1473, color:'#7a2018' },
+  { name:'Immortal I',     tier:'Immortal',    div:'I',   min:1473, max:1541, color:'#f4f4f4' },
+  { name:'Immortal II',    tier:'Immortal',    div:'II',  min:1541, max:1607, color:'#d0d0d0' },
+  { name:'Immortal III',   tier:'Immortal',    div:'III', min:1607, max:1673, color:'#a0a0a0' },
+  { name:'Transcendent I', tier:'Transcendent',div:'I',   min:1673, max:1741, color:'#f0d060' },
+  { name:'Transcendent II',tier:'Transcendent',div:'II',  min:1741, max:1825, color:'#b8963f' },
+  { name:'Transcendent III',tier:'Transcendent',div:'III',min:1825, max:Infinity, color:'#4a3b1a' },
+];
+
+const PLATINUM_FLOOR_INDEX = LEAGUES.findIndex(l => l.name === 'Platinum I');
+
+function getLeagueIndexForStreak(streak){
+  const idx = LEAGUES.findIndex(l => streak >= l.min && streak < l.max);
+  return idx === -1 ? LEAGUES.length - 1 : idx;
+}
+
+// reachedPlatinumFloor: once true, league can never display below Platinum I again.
+function getLeague(streak, reachedPlatinumFloor){
+  let idx = getLeagueIndexForStreak(streak);
+  if(reachedPlatinumFloor && idx < PLATINUM_FLOOR_INDEX){
+    idx = PLATINUM_FLOOR_INDEX;
+  }
+  return LEAGUES[idx];
+}
+
+function pipsFor(div){
+  if(div === 'I') return '\u25CF\u25CB\u25CB';
+  if(div === 'II') return '\u25CF\u25CF\u25CB';
+  if(div === 'III') return '\u25CF\u25CF\u25CF';
+  return '';
+}
+
+// Timetable data: keyed by JS getDay() index (0=Sun ... 6=Sat). Each entry: [startMin, endMin, label]
+const TIMETABLE = {
+  1: [ [390,450,'Study'],[450,510,'SolidWorks'],[540,630,'Gym'],[1020,1140,'Gaming'],[1320,1440,'Free Time'] ], // Monday
+  2: [ [360,420,'Study'],[430,480,'Travel'],[480,600,'College'],[600,650,'Travel'],[690,750,'SolidWorks'],[1020,1110,'Gym'],[1170,1290,'Gaming'],[1320,1440,'Free Time'] ], // Tuesday
+  3: [ [360,420,'Study'],[430,480,'Travel'],[480,780,'College'],[780,830,'Travel'],[870,930,'SolidWorks'],[1020,1110,'Gym'],[1170,1290,'Gaming'],[1320,1440,'Free Time'] ], // Wednesday
+  4: [ [360,420,'Study'],[430,480,'Travel'],[480,780,'College'],[780,830,'Travel'],[870,930,'SolidWorks'],[1020,1110,'Gym'],[1170,1290,'Gaming'],[1320,1440,'Free Time'] ], // Thursday
+  5: [ [390,450,'Study'],[450,510,'SolidWorks'],[550,600,'Travel'],[600,660,'College'],[660,710,'Travel'],[720,810,'Gym'],[1170,1290,'Gaming'],[1320,1440,'Free Time'] ], // Friday
+  6: [ [360,420,'Study'],[430,480,'Travel'],[480,960,'College'],[960,1010,'Travel'],[1050,1110,'SolidWorks'],[1170,1290,'Gaming'],[1320,1440,'Free Time'] ], // Saturday
+  0: [ [540,600,'Study'],[1020,1140,'Gaming'],[1320,1440,'Free Time'] ], // Sunday
+};
+
+const TIMETABLE_COLORS = {
+  'Study':'#6fa8dc', 'SolidWorks':'#5fad8c', 'Gym':'#c9524a',
+  'College':'#e8a33d', 'Travel':'#8fadc4', 'Gaming':'#a78bd8', 'Free Time':'#5fc9c9'
+};
+
+// Gym schedule keyed by JS getDay() index (0=Sun...6=Sat), matching the gym days already in TIMETABLE (Mon-Fri).
+const GYM_SCHEDULE = {
+  1: { title:'Chest + Triceps', exercises:[
+        {name:'Push-ups (warm-up)', detail:'3\u00D715'},
+        {name:'Dumbbell/Barbell Bench Press', detail:'4\u00D710'},
+        {name:'Incline Dumbbell Press', detail:'3\u00D712'},
+        {name:'Dumbbell Flyes', detail:'3\u00D712'},
+        {name:'Tricep Dips', detail:'3\u00D712'},
+        {name:'Overhead Tricep Extension', detail:'3\u00D712'},
+      ], finisher:'Core finisher \u2014 Plank 3\u00D745 sec' },
+  2: { title:'Back + Biceps (Focus Day)', exercises:[
+        {name:'Pull-ups', detail:'4\u00D7Max'},
+        {name:'Dumbbell Rows', detail:'4\u00D710'},
+        {name:'Barbell/Dumbbell Curl', detail:'4\u00D712'},
+        {name:'Hammer Curls', detail:'4\u00D712'},
+        {name:'Concentration Curls', detail:'3\u00D712'},
+      ], finisher:'Core finisher \u2014 Leg Raises 3\u00D715' },
+  3: { title:'Legs + Core', exercises:[
+        {name:'Squats', detail:'4\u00D710'},
+        {name:'Romanian Deadlift', detail:'3\u00D710'},
+        {name:'Lunges', detail:'3\u00D712 each leg'},
+        {name:'Calf Raises', detail:'4\u00D720'},
+        {name:'Plank', detail:'3\u00D760 sec'},
+        {name:'Bicycle Crunches', detail:'3\u00D720'},
+        {name:'Mountain Climbers', detail:'3\u00D730 sec'},
+      ], finisher:null },
+  4: { title:'Shoulders + Core', exercises:[
+        {name:'Dumbbell Shoulder Press', detail:'4\u00D710'},
+        {name:'Lateral Raises', detail:'4\u00D712'},
+        {name:'Front Raises', detail:'3\u00D712'},
+        {name:'Rear Delt Flyes', detail:'3\u00D712'},
+        {name:'Russian Twists', detail:'3\u00D720'},
+        {name:'Hollow Body Hold', detail:'3\u00D730 sec'},
+      ], finisher:null },
+  5: { title:'Arms Specialization + Cardio', exercises:[
+        {name:'Barbell Curls', detail:'4\u00D710'},
+        {name:'Hammer Curls', detail:'3\u00D712'},
+        {name:'Tricep Dips', detail:'3\u00D712'},
+        {name:'Tricep Pushdowns', detail:'3\u00D712'},
+        {name:'Jog or Cycling', detail:'20\u201325 min'},
+      ], finisher:null },
+  6: { title:'Rest Day', exercises:[], finisher:null, rest:true },
+  0: { title:'Rest Day', exercises:[], finisher:null, rest:true },
+};
+
+function fmtTime12(mins){
+  const m = ((mins % 1440) + 1440) % 1440;
+  const h = Math.floor(m/60), mi = m%60;
+  const period = h < 12 ? 'AM' : 'PM';
+  let h12 = h % 12; if(h12 === 0) h12 = 12;
+  return `${h12}:${mi.toString().padStart(2,'0')} ${period}`;
+}
+
+// 36 half-hour slots from 6:00 AM to 12:00 AM (midnight), used by Setup My Schedule
+const SETUP_SLOTS = [];
+for(let m=360; m<1440; m+=30){ SETUP_SLOTS.push([m, m+30]); }
+
+const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const PENCIL_SVG = `<svg class="pencil-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`;
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function dateKey(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+// Parses a "YYYY-MM-DD" key back into a local-time Date object at midnight.
+// (new Date("YYYY-MM-DD") parses as UTC midnight, which shifts the day
+// backwards for any timezone ahead of UTC - this avoids that bug.)
+function parseDateKey(key){
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+function fmtShort(d){ return `${DAY_NAMES[d.getDay()].slice(0,3)} ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`; }
+
+// ---- App state ----
+let daysLog, missedQueue, tokensLeft, currentMonthKey;
+let lastActiveDateKey, finalizedStatus; // finalizedStatus: {dateKey: 'completed'|'missed'|'restored'} for PAST days only
+let bestStreak, showModal;
+let showTimetableModal, selectedTTDay;
+let bestLeagueIndex, reachedPlatinumFloor, showDivisions;
+let showSettingsMenu, showImportModal, showExportModal, importText, exportText;
+let showResetConfirmModal;
+let showSetupTTModal, setupSelectedDay;
+let customTimetable; // null = use defaults; else custom data set via Setup
+let draftTimetable; // in-progress edits while Setup modal is open
+let customTasks; // array of {id, title, type:'weekly'|'monthly', ...}
+let showSetupTaskModal, showRemoveTaskModal, newTaskType, draftWeeklyTask, editingTaskId;
+let showMoreModal, selectedMoreTaskId, moreSelectedDay, moreMonthlyDayDetail;
+let showTodoModal, todoList, editingTodoId;
+let fromTimetableEdits, editingFromTTKey;
+let dragTodoId; // currently-dragged item, for drag-reorder
+
+// The calendar date shown to the user changes at real midnight, as normal.
+// But the task list / rollover logic gets a grace window: between 12:00 AM
+// and 3:59 AM, you're still effectively working on YESTERDAY's checklist.
+// It only becomes a new app-day at 4:00 AM.
+function getAppEffectiveDate(){
+  const now = new Date();
+  const eff = new Date(now);
+  if(now.getHours() < 4){
+    eff.setDate(eff.getDate() - 1);
+  }
+  return eff;
+}
+
+function todayKeyNow(){ return dateKey(getAppEffectiveDate()); }
+
+function seedDefaultGymTask(){
+  const weeklyBlocks = {};
+  for(let d=0; d<7; d++){
+    const def = GYM_SCHEDULE[d];
+    weeklyBlocks[d] = def.rest
+      ? { title:'', items:[], rest:true }
+      : { title:def.title, items:def.exercises.map(e=>({name:e.name,detail:e.detail})), rest:false };
+  }
+  return { id:'gym_default', title:'Gym', type:'weekly', startDate:null, weeklyBlocks, monthlyBlocks:null };
+}
+
+function initState(){
+  daysLog = {};
+  missedQueue = [];
+  tokensLeft = 4;
+  const now = new Date();
+  currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
+  lastActiveDateKey = todayKeyNow();
+  finalizedStatus = {};
+  daysLog[lastActiveDateKey] = { tasks:{}, note:'' };
+  bestStreak = 0;
+  showModal = false;
+  showTimetableModal = false;
+  selectedTTDay = null; // set on first render to today's day
+  bestLeagueIndex = 0;
+  reachedPlatinumFloor = false;
+  showDivisions = false;
+  showSettingsMenu = false;
+  showImportModal = false;
+  showExportModal = false;
+  importText = '';
+  exportText = '';
+  showResetConfirmModal = false;
+  showSetupTTModal = false;
+  setupSelectedDay = 1;
+  customTimetable = null;
+  customTasks = [ seedDefaultGymTask() ];
+  showSetupTaskModal = false;
+  showRemoveTaskModal = false;
+  newTaskType = 'weekly';
+  draftWeeklyTask = null;
+  editingTaskId = null;
+  showMoreModal = false;
+  selectedMoreTaskId = null;
+  moreSelectedDay = null;
+  moreMonthlyDayDetail = null;
+  showTodoModal = false;
+  todoList = [];
+  editingTodoId = null;
+  fromTimetableEdits = {};
+  editingFromTTKey = null;
+  dragTodoId = null;
+}
+
+const PROTO_STORAGE_KEY = 'dailyBuildLogData';
+
+// Persists the same way the real production file will: plain JSON in localStorage.
+function serializeState(){
+  return {
+    lastActiveDateKey, finalizedStatus,
+    daysLog, missedQueue, tokensLeft, currentMonthKey,
+    bestStreak, bestLeagueIndex, reachedPlatinumFloor,
+    customTimetable, customTasks, todoList, fromTimetableEdits
+  };
+}
+
+function saveToLocalStorage(){
+  try{
+    localStorage.setItem(PROTO_STORAGE_KEY, JSON.stringify(serializeState()));
+  }catch(e){
+    console.error('Could not save to local storage', e);
+  }
+}
+
+function loadFromLocalStorage(){
+  try{
+    const raw = localStorage.getItem(PROTO_STORAGE_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){
+    return null;
+  }
+}
+
+// Checks whether a given day (past or today) has every required task ticked.
+// A day with zero required tasks (nothing typed into the timetable that day)
+// counts as automatically satisfied, since there was nothing assigned to do.
+function isDayComplete(key){
+  const entry = daysLog[key];
+  if(!entry) return false;
+  const d = parseDateKey(key);
+  const required = tasksForDay(d.getDay());
+  if(required.length === 0) return true;
+  return required.every(t => entry.tasks[t.id]);
+}
+
+function finalizeDayIfNeeded(key){
+  if(finalizedStatus[key]) return; // already resolved (e.g. via immediate catch-up restore)
+  const done = isDayComplete(key);
+  finalizedStatus[key] = done ? 'completed' : 'missed';
+  if(!done) missedQueue.push(key);
+}
+
+// Runs every time the app opens. Finalizes yesterday (and any days skipped
+// entirely while the app was closed), rolls monthly tokens over, and prunes
+// the 30-day catch-up window. This replaces manually clicking "next day."
+function runRollover(){
+  const nowKey = todayKeyNow();
+  if(!lastActiveDateKey){
+    lastActiveDateKey = nowKey;
+    if(!daysLog[nowKey]) daysLog[nowKey] = { tasks:{}, note:'' };
+    return;
+  }
+  if(lastActiveDateKey !== nowKey){
+    let cursor = parseDateKey(lastActiveDateKey);
+    const stop = parseDateKey(nowKey);
+    while(dateKey(cursor) !== dateKey(stop)){
+      finalizeDayIfNeeded(dateKey(cursor));
+      cursor.setDate(cursor.getDate()+1);
+    }
+    lastActiveDateKey = nowKey;
+  }
+  if(!daysLog[nowKey]) daysLog[nowKey] = { tasks:{}, note:'' };
+  pruneMissedQueue();
+  const now = new Date();
+  const newMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
+  if(newMonthKey !== currentMonthKey){
+    tokensLeft = 4;
+    currentMonthKey = newMonthKey;
+  }
+}
+
+function bootstrapState(){
+  const saved = loadFromLocalStorage();
+  if(saved){
+    daysLog = saved.daysLog || {};
+    missedQueue = saved.missedQueue || [];
+    tokensLeft = typeof saved.tokensLeft === 'number' ? saved.tokensLeft : 4;
+    currentMonthKey = saved.currentMonthKey || '';
+    lastActiveDateKey = saved.lastActiveDateKey || null;
+    finalizedStatus = saved.finalizedStatus || {};
+    bestStreak = saved.bestStreak || 0;
+    bestLeagueIndex = saved.bestLeagueIndex || 0;
+    reachedPlatinumFloor = !!saved.reachedPlatinumFloor;
+    customTimetable = saved.customTimetable || null;
+    customTasks = saved.customTasks || [ seedDefaultGymTask() ];
+    todoList = saved.todoList || [];
+    fromTimetableEdits = saved.fromTimetableEdits || {};
+    // transient UI state always starts fresh, even when saved data is restored
+    showModal = false;
+    showTimetableModal = false;
+    selectedTTDay = null;
+    showDivisions = false;
+    showSettingsMenu = false;
+    showImportModal = false;
+    showExportModal = false;
+    importText = '';
+    exportText = '';
+    showResetConfirmModal = false;
+    showSetupTTModal = false;
+    setupSelectedDay = 1;
+    showSetupTaskModal = false;
+    showRemoveTaskModal = false;
+    newTaskType = 'weekly';
+    draftWeeklyTask = null;
+    editingTaskId = null;
+    showMoreModal = false;
+    selectedMoreTaskId = null;
+    moreSelectedDay = null;
+    moreMonthlyDayDetail = null;
+    showTodoModal = false;
+    editingTodoId = null;
+    editingFromTTKey = null;
+    dragTodoId = null;
+  } else {
+    initState();
+  }
+  runRollover();
+}
+bootstrapState();
+
+function computeStreak(){
+  let streak = 0;
+  let cursor = new Date();
+  cursor.setDate(cursor.getDate()-1); // day before today (today isn't finalized yet)
+  while(true){
+    const key = dateKey(cursor);
+    if(finalizedStatus[key] === 'completed' || finalizedStatus[key] === 'restored'){
+      streak++;
+      cursor.setDate(cursor.getDate()-1);
+    } else {
+      break;
+    }
+  }
+  if(streak > bestStreak) bestStreak = streak;
+
+  const idxNow = getLeagueIndexForStreak(streak);
+  if(idxNow > bestLeagueIndex) bestLeagueIndex = idxNow;
+  if(idxNow >= PLATINUM_FLOOR_INDEX) reachedPlatinumFloor = true;
+
+  return streak;
+}
+
+function pruneMissedQueue(){
+  const now = new Date();
+  missedQueue = missedQueue.filter(key=>{
+    const d = parseDateKey(key);
+    const diffDays = Math.floor((now - d) / 86400000);
+    return diffDays <= 30;
+  });
+}
+
+// Called right after any task tick, to resolve a catch-up the same day it's completed.
+function checkImmediateCatchup(){
+  if(missedQueue.length === 0 || tokensLeft <= 0) return;
+  const catchupKey = missedQueue[0];
+  if(finalizedStatus[catchupKey] === 'restored'){ missedQueue.shift(); return; }
+  const nowKey = todayKeyNow();
+  if(isDayComplete(catchupKey) && isDayComplete(nowKey)){
+    finalizedStatus[catchupKey] = 'restored';
+    tokensLeft--;
+    missedQueue.shift();
+  }
+}
+
+// Ticks a task for ANY specific past date (used by the "From Timetable"
+// reminder section, which can show several backlogged days at once, not
+// just the one currently at the front of the catch-up queue). Progress is
+// saved regardless of queue position; the day only actually gets restored
+// once it reaches the front and checkImmediateCatchup resolves it.
+function toggleAnyDayTask(dateKeyStr, taskId){
+  if(!daysLog[dateKeyStr]) daysLog[dateKeyStr] = { tasks:{}, note:'' };
+  daysLog[dateKeyStr].tasks[taskId] = !daysLog[dateKeyStr].tasks[taskId];
+  checkImmediateCatchup();
+  render();
+}
+
+function startEditFromTT(editKey, defaultLabel){
+  editingFromTTKey = editKey;
+  if(!(editKey in fromTimetableEdits)){
+    // seed the input with the current default label so editing starts from something sensible
+    fromTimetableEdits[editKey] = defaultLabel;
+  }
+  render();
+}
+
+function saveEditFromTT(editKey){
+  const input = document.getElementById('editFromTT_'+editKey);
+  if(!input) return;
+  const text = input.value.trim();
+  if(text) fromTimetableEdits[editKey] = text;
+  editingFromTTKey = null;
+  saveToLocalStorage();
+  render();
+}
+
+function todoDragStart(id){
+  dragTodoId = id;
+}
+
+function todoDragEnd(){
+  dragTodoId = null;
+  document.querySelectorAll('.todo-row').forEach(r=>{
+    r.classList.remove('drag-over-top','drag-over-bottom');
+  });
+}
+
+function todoReorder(targetId, position){
+  if(!dragTodoId || dragTodoId === targetId) return;
+  const fromIdx = todoList.findIndex(t=>t.id===dragTodoId);
+  let toIdx = todoList.findIndex(t=>t.id===targetId);
+  if(fromIdx === -1 || toIdx === -1) return;
+  const [moved] = todoList.splice(fromIdx, 1);
+  toIdx = todoList.findIndex(t=>t.id===targetId);
+  const insertAt = position === 'below' ? toIdx + 1 : toIdx;
+  todoList.splice(insertAt, 0, moved);
+  saveToLocalStorage();
+  render();
+}
+
+let resetMode = 'all'; // 'all' or 'progress'
+
+function openResetConfirm(mode){
+  showSettingsMenu = false;
+  resetMode = mode;
+  showResetConfirmModal = true;
+  render();
+}
+
+function cancelResetConfirm(){
+  showResetConfirmModal = false;
+  render();
+}
+
+function confirmReset(){
+  if(resetMode === 'progress'){
+    // Wipe streak/history/badges/tokens only - keep timetable, custom tasks, and to-do list.
+    daysLog = {};
+    missedQueue = [];
+    tokensLeft = 4;
+    const now = new Date();
+    currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
+    lastActiveDateKey = todayKeyNow();
+    finalizedStatus = {};
+    daysLog[lastActiveDateKey] = { tasks:{}, note:'' };
+    bestStreak = 0;
+    bestLeagueIndex = 0;
+    reachedPlatinumFloor = false;
+    showResetConfirmModal = false;
+    saveToLocalStorage();
+    render();
+  } else {
+    try{ localStorage.removeItem(PROTO_STORAGE_KEY); }catch(e){}
+    initState();
+    render();
+  }
+}
+
+function toggleModal(){
+  showModal = !showModal;
+  showDivisions = false;
+  render();
+}
+
+function toggleTodoModal(){
+  showTodoModal = !showTodoModal;
+  editingTodoId = null;
+  render();
+}
+
+function addTodoItem(){
+  const input = document.getElementById('newTodoInput');
+  const text = input.value.trim();
+  if(!text) return;
+  todoList.push({ id:'todo_'+Date.now(), text, done:false });
+  saveToLocalStorage();
+  render();
+}
+
+function toggleTodoItem(id){
+  const item = todoList.find(t=>t.id===id);
+  if(item) item.done = !item.done;
+  saveToLocalStorage();
+  render();
+}
+
+function removeTodoItem(id){
+  todoList = todoList.filter(t=>t.id!==id);
+  saveToLocalStorage();
+  render();
+}
+
+function startEditTodo(id){
+  editingTodoId = id;
+  render();
+}
+
+function saveEditTodo(id){
+  const input = document.getElementById('editTodoInput_'+id);
+  if(!input) return;
+  const text = input.value.trim();
+  if(!text) return;
+  const item = todoList.find(t=>t.id===id);
+  if(item) item.text = text;
+  editingTodoId = null;
+  saveToLocalStorage();
+  render();
+}
+
+function toggleDivisions(){
+  showDivisions = !showDivisions;
+  render();
+}
+
+function toggleTimetableModal(){
+  showTimetableModal = !showTimetableModal;
+  if(showTimetableModal && selectedTTDay === null){
+    selectedTTDay = new Date().getDay();
+  }
+  render();
+}
+
+function setTTDay(dayIdx){
+  selectedTTDay = dayIdx;
+  render();
+}
+
+function toggleSettingsMenu(){
+  showSettingsMenu = !showSettingsMenu;
+  render();
+}
+
+function closeAllSettingsModals(){
+  showImportModal = false;
+  showExportModal = false;
+  showSetupTTModal = false;
+  showSetupTaskModal = false;
+  showRemoveTaskModal = false;
+  editingTaskId = null;
+  render();
+}
+
+function buildFullState(){
+  return {
+    lastActiveDateKey, finalizedStatus,
+    daysLog, missedQueue, tokensLeft, currentMonthKey, bestStreak,
+    bestLeagueIndex, reachedPlatinumFloor, customTimetable, customTasks, todoList, fromTimetableEdits
+  };
+}
+
+function b64Encode(str){ return btoa(unescape(encodeURIComponent(str))); }
+function b64Decode(str){ return decodeURIComponent(escape(atob(str))); }
+
+function openExportModal(){
+  showSettingsMenu = false;
+  exportText = b64Encode(JSON.stringify(buildFullState()));
+  showExportModal = true;
+  render();
+}
+
+function openImportModal(){
+  showSettingsMenu = false;
+  importText = '';
+  showImportModal = true;
+  render();
+}
+
+function confirmImport(){
+  const val = document.getElementById('importBox').value.trim();
+  if(!val){ return; }
+  try{
+    const parsed = JSON.parse(b64Decode(val));
+    lastActiveDateKey = parsed.lastActiveDateKey || lastActiveDateKey;
+    finalizedStatus = parsed.finalizedStatus || {};
+    daysLog = parsed.daysLog || {};
+    missedQueue = parsed.missedQueue || [];
+    tokensLeft = typeof parsed.tokensLeft === 'number' ? parsed.tokensLeft : 4;
+    currentMonthKey = parsed.currentMonthKey || currentMonthKey;
+    bestStreak = parsed.bestStreak || 0;
+    bestLeagueIndex = parsed.bestLeagueIndex || 0;
+    reachedPlatinumFloor = !!parsed.reachedPlatinumFloor;
+    customTimetable = parsed.customTimetable || null;
+    customTasks = parsed.customTasks || [];
+    todoList = parsed.todoList || [];
+    fromTimetableEdits = parsed.fromTimetableEdits || {};
+    runRollover();
+    showImportModal = false;
+    render();
+  }catch(e){
+    alert('That code could not be read. Double-check it was copied in full.');
+  }
+}
+
+function defaultTimetableAsSlots(dayIdx){
+  return SETUP_SLOTS.map(([s,e])=>{
+    const mid = s + 15;
+    const ev = TIMETABLE[dayIdx].find(([es,ee])=> mid>=es && mid<ee);
+    return ev ? ev[2] : '';
+  });
+}
+
+function openSetupTimetable(){
+  showSettingsMenu = false;
+  draftTimetable = {};
+  for(let d=0; d<7; d++){
+    if(customTimetable && customTimetable[d]){
+      draftTimetable[d] = customTimetable[d].slice();
+    } else {
+      draftTimetable[d] = defaultTimetableAsSlots(d);
+    }
+  }
+  setupSelectedDay = new Date().getDay();
+  showSetupTTModal = true;
+  render();
+}
+
+function clearSetupTimetableDay(){
+  draftTimetable[setupSelectedDay] = new Array(SETUP_SLOTS.length).fill('');
+  render();
+}
+
+function setSetupTTDay(d){
+  captureSetupTTInputs();
+  setupSelectedDay = d;
+  render();
+}
+
+function captureSetupTTInputs(){
+  const inputs = document.querySelectorAll('.setup-input[data-slot]');
+  if(inputs.length === 0) return;
+  inputs.forEach(inp=>{
+    const idx = parseInt(inp.dataset.slot);
+    draftTimetable[setupSelectedDay][idx] = inp.value;
+  });
+}
+
+function saveSetupTimetable(){
+  captureSetupTTInputs();
+  customTimetable = draftTimetable;
+  showSetupTTModal = false;
+  render();
+}
+
+// Generic Day-Block parser, reused for gym-style content AND any custom task.
+// Recognizes "Day N — Title" then "- Item — Detail" sub-lines. Returns array of
+// {dayNum, title, items:[{name,detail}], rest} in the order encountered.
+function parseBlockPaste(text){
+  const lines = text.split('\n');
+  const results = [];
+  let current = null;
+  lines.forEach(raw=>{
+    const line = raw.trim();
+    if(!line) return;
+    const dayMatch = line.match(/^Day\s*(\d+)\s*[\u2014\u2013-]+\s*(.+)$/i);
+    if(dayMatch){
+      const dayNum = parseInt(dayMatch[1]);
+      const title = dayMatch[2].trim();
+      const isRest = /^rest$/i.test(title);
+      current = { dayNum, title: isRest ? '' : title, items:[], rest:isRest };
+      results.push(current);
+      return;
+    }
+    // Bullet markers: •, -, or ~. Detail split only on an em/en dash (—/–),
+    // so plain bullets with no sets/reps split still parse fine as a single item.
+    const bulletMatch = line.match(/^[\u2022~-]\s*(.+)$/);
+    if(bulletMatch && current && !current.rest){
+      const rest = bulletMatch[1].trim();
+      const detailSplit = rest.match(/^(.+?)\s*[\u2014\u2013]\s*(.+)$/);
+      if(detailSplit){
+        current.items.push({ name:detailSplit[1].trim(), detail:detailSplit[2].trim() });
+      } else {
+        current.items.push({ name:rest, detail:'' });
+      }
+    }
+  });
+  return results;
+}
+
+function openSetupTaskModal(){
+  showSettingsMenu = false;
+  editingTaskId = null;
+  newTaskType = 'weekly';
+  draftWeeklyTask = {
+    title:'',
+    startDate: dateKey(new Date()),
+    weeklyBlocks: {0:{title:'',items:[],rest:false},1:{title:'',items:[],rest:false},2:{title:'',items:[],rest:false},3:{title:'',items:[],rest:false},4:{title:'',items:[],rest:false},5:{title:'',items:[],rest:false},6:{title:'',items:[],rest:false}},
+    monthlyBlocks: {}
+  };
+  setupSelectedDay = new Date().getDay();
+  showSetupTaskModal = true;
+  render();
+}
+
+function openEditTask(id){
+  const task = customTasks.find(t=>t.id===id);
+  if(!task) return;
+  showMoreModal = false;
+  editingTaskId = id;
+  newTaskType = task.type;
+  draftWeeklyTask = {
+    title: task.title,
+    startDate: task.startDate || dateKey(new Date()),
+    weeklyBlocks: task.weeklyBlocks
+      ? JSON.parse(JSON.stringify(task.weeklyBlocks))
+      : {0:{title:'',items:[],rest:false},1:{title:'',items:[],rest:false},2:{title:'',items:[],rest:false},3:{title:'',items:[],rest:false},4:{title:'',items:[],rest:false},5:{title:'',items:[],rest:false},6:{title:'',items:[],rest:false}},
+    monthlyBlocks: task.monthlyBlocks ? JSON.parse(JSON.stringify(task.monthlyBlocks)) : {}
+  };
+  setupSelectedDay = new Date().getDay();
+  showSetupTaskModal = true;
+  render();
+}
+
+function setNewTaskType(type){
+  captureNewTaskDraft();
+  newTaskType = type;
+  render();
+}
+
+function captureNewTaskDraft(){
+  const titleInput = document.getElementById('newTaskTitle');
+  if(titleInput) draftWeeklyTask.title = titleInput.value;
+  const startInput = document.getElementById('newTaskStartDate');
+  if(startInput && startInput.value) draftWeeklyTask.startDate = startInput.value;
+}
+
+function setNewTaskDay(d){
+  captureNewTaskDraft();
+  setupSelectedDay = d;
+  render();
+}
+
+function saveNewTask(){
+  captureNewTaskDraft();
+  if(!draftWeeklyTask.title.trim()){ alert('Give the task a title first.'); return; }
+
+  if(editingTaskId){
+    const task = customTasks.find(t=>t.id===editingTaskId);
+    if(task){
+      task.title = draftWeeklyTask.title.trim();
+      task.type = newTaskType;
+      task.startDate = newTaskType === 'monthly' ? draftWeeklyTask.startDate : null;
+      task.weeklyBlocks = newTaskType === 'weekly' ? draftWeeklyTask.weeklyBlocks : null;
+      task.monthlyBlocks = newTaskType === 'monthly' ? draftWeeklyTask.monthlyBlocks : null;
+      if(newTaskType === 'monthly' && !task.monthlyCompletedDays) task.monthlyCompletedDays = {};
+      if(newTaskType === 'weekly') task.monthlyCompletedDays = null;
+    }
+    editingTaskId = null;
+  } else {
+    const id = slugify(draftWeeklyTask.title) + '_' + Date.now();
+    customTasks.push({
+      id,
+      title: draftWeeklyTask.title.trim(),
+      type: newTaskType,
+      startDate: newTaskType === 'monthly' ? draftWeeklyTask.startDate : null,
+      weeklyBlocks: newTaskType === 'weekly' ? draftWeeklyTask.weeklyBlocks : null,
+      monthlyBlocks: newTaskType === 'monthly' ? draftWeeklyTask.monthlyBlocks : null,
+      monthlyCompletedDays: newTaskType === 'monthly' ? {} : null
+    });
+  }
+  showSetupTaskModal = false;
+  render();
+}
+
+function parseNewTaskPaste(){
+  const text = document.getElementById('newTaskPasteBox').value;
+  const parsed = parseBlockPaste(text);
+  if(newTaskType === 'weekly'){
+    parsed.forEach(entry=>{
+      const weekdayIdx = entry.dayNum === 7 ? 0 : entry.dayNum;
+      if(weekdayIdx >= 0 && weekdayIdx <= 6){
+        draftWeeklyTask.weeklyBlocks[weekdayIdx] = { title:entry.title, items:entry.items, rest:entry.rest };
+      }
+    });
+  } else {
+    parsed.forEach(entry=>{
+      draftWeeklyTask.monthlyBlocks[entry.dayNum] = { title:entry.title, items:entry.items, rest:entry.rest };
+    });
+  }
+  render();
+}
+
+function openRemoveTaskModal(){
+  showSettingsMenu = false;
+  showRemoveTaskModal = true;
+  render();
+}
+
+function removeCustomTask(id){
+  customTasks = customTasks.filter(t => t.id !== id);
+  render();
+}
+
+// ---- "More" hub: reference view for weekly/monthly custom tasks (incl. seeded Gym) ----
+function toggleMoreModal(){
+  showMoreModal = !showMoreModal;
+  selectedMoreTaskId = null;
+  moreMonthlyDayDetail = null;
+  render();
+}
+
+function openMoreTaskDetail(id){
+  selectedMoreTaskId = id;
+  moreMonthlyDayDetail = null;
+  const task = customTasks.find(t=>t.id===id);
+  moreSelectedDay = task && task.type === 'weekly' ? new Date().getDay() : null;
+  render();
+}
+
+function backToMoreList(){
+  selectedMoreTaskId = null;
+  moreMonthlyDayDetail = null;
+  render();
+}
+
+function setMoreDay(d){
+  moreSelectedDay = d;
+  render();
+}
+
+function currentElapsedDays(task){
+  const start = parseDateKey(task.startDate);
+  const diff = Math.floor((new Date() - start) / 86400000) + 1;
+  return diff;
+}
+
+function applicableMonthlyBlock(task){
+  const elapsed = currentElapsedDays(task);
+  const keys = Object.keys(task.monthlyBlocks || {}).map(Number).sort((a,b)=>a-b);
+  let applicable = null;
+  for(const k of keys){
+    if(k <= elapsed) applicable = k;
+    else break;
+  }
+  return applicable;
+}
+
+function formatDMY(date){
+  return `${date.getDate()}/${date.getMonth()+1}/${date.getFullYear()}`;
+}
+
+function dateForDayNumber(startDateStr, dayNum){
+  const d = parseDateKey(startDateStr);
+  d.setDate(d.getDate() + (dayNum - 1));
+  return d;
+}
+
+// Given any day number, find the milestone whose key is the largest one <= dayNum
+function milestoneForDayNumber(task, dayNum){
+  const keys = Object.keys(task.monthlyBlocks || {}).map(Number).sort((a,b)=>a-b);
+  let applicable = null;
+  for(const k of keys){
+    if(k <= dayNum) applicable = k;
+    else break;
+  }
+  return applicable === null ? null : task.monthlyBlocks[applicable];
+}
+
+function toggleMonthlyDayComplete(taskId, dayNum){
+  const task = customTasks.find(t=>t.id===taskId);
+  if(!task) return;
+  task.monthlyCompletedDays[dayNum] = !task.monthlyCompletedDays[dayNum];
+  render();
+}
+
+function openMonthlyDayDetail(dayNum){
+  moreMonthlyDayDetail = dayNum;
+  render();
+}
+
+function backToMonthlyDayList(){
+  moreMonthlyDayDetail = null;
+  render();
+}
+
+function toggleTodayTask(id){
+  const key = todayKeyNow();
+  if(!daysLog[key]) daysLog[key] = { tasks:{}, note:'' };
+  daysLog[key].tasks[id] = !daysLog[key].tasks[id];
+  checkImmediateCatchup();
+  render();
+}
+function toggleCatchupTask(id){
+  const key = missedQueue[0];
+  if(!key) return;
+  if(!daysLog[key]) daysLog[key] = { tasks:{}, note:'' };
+  daysLog[key].tasks[id] = !daysLog[key].tasks[id];
+  checkImmediateCatchup();
+  render();
+}
+
+function render(){
+  saveToLocalStorage();
+  const now = new Date(); // real time, used for the displayed date/day header
+  const effDate = getAppEffectiveDate(); // used for which tasks are "today's" (4am grace window)
+  const todayKey = todayKeyNow();
+  if(!daysLog[todayKey]) daysLog[todayKey] = { tasks:{}, note:'' };
+  const todayDayTasks = tasksForDay(effDate.getDay());
+  const streak = computeStreak();
+  const catchupKey = (missedQueue.length>0 && tokensLeft>0) ? missedQueue[0] : null;
+  const catchupDate = catchupKey ? parseDateKey(catchupKey) : null;
+  const catchupTasks = catchupKey ? tasksForDay(catchupDate.getDay()) : [];
+
+  const historyEntries = Array.from(new Set([...Object.keys(daysLog), ...Object.keys(finalizedStatus)])).sort().reverse().slice(0,14);
+
+  const sheet = document.getElementById('sheet');
+  sheet.innerHTML = `
+    <div class="controls">
+      <div class="btn tt-btn" id="ttBtn">\u{1F4CB} Timetable</div>
+      <div class="btn gym-btn" id="moreBtn">\u2795 More</div>
+      <div class="btn tt-btn" id="todoBtn">\u{1F4DD} To Do</div>
+      <div class="btn badge-btn" id="badgeBtn">\u{1F3C6} Badges</div>
+      <div class="settings-wrap">
+        <div class="settings-gear" id="settingsGear">\u2699\uFE0F</div>
+        ${showSettingsMenu ? `
+          <div class="settings-menu" id="settingsMenu">
+            <div class="settings-item" id="menuImport">Import</div>
+            <div class="settings-item" id="menuExport">Export</div>
+            <div class="settings-item" id="menuSetupTT">Setup My Schedule</div>
+            <div class="settings-item" id="menuSetupTask">Setup New Task</div>
+            <div class="settings-item" id="menuRemoveTask">Remove Task</div>
+            <div class="settings-item" id="menuResetProgress" style="color:var(--amber);">Reset Progress Only</div>
+            <div class="settings-item" id="menuResetAll" style="color:var(--red-stamp);">Reset All Data</div>
+          </div>
+        ` : ''}
+      </div>
+    </div>
+    <div class="sheet-header">
+      <div class="title-block">
+        <p class="eyebrow">SHEET &middot; ${dateKey(now)}</p>
+        <h1>Daily Build Log</h1>
+      </div>
+      <div class="date-block">
+        <div class="day">${DAY_NAMES[now.getDay()]}</div>
+        <div class="date">${now.getDate()} ${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}</div>
+      </div>
+    </div>
+    <div class="stat-bar">
+      <div><span class="num">${streak}</span> DAY STREAK</div>
+      <div><span class="num">${tokensLeft}/4</span> RESTORES LEFT</div>
+    </div>
+    ${catchupKey ? `<div class="catchup-banner">\u26A0 MISSED DAY: ${fmtShort(catchupDate)} &mdash; complete the catch-up tasks below AND today's tasks to restore this day (uses 1 token).</div>` : ''}
+    <div class="body-panel">
+      <p class="section-label">TODAY'S TASKS</p>
+      <div id="todayList"></div>
+      ${catchupKey ? `<div class="catchup-block"><p class="section-label" style="color:var(--amber)">CATCH-UP: ${fmtShort(catchupDate)}</p><div id="catchupList"></div></div>` : ''}
+    </div>
+    <div class="history-log" id="historyLog"></div>
+    <div class="footer-note">
+      Plans shift &mdash; that's fine. Check tasks off whenever you actually get them done, in any order. The displayed date changes at midnight, but you have until 4:00 AM to finish that day's tasks before they lock in.
+    </div>
+    ${showModal ? renderModal(streak) : ''}
+    ${showTimetableModal ? renderTimetableModal() : ''}
+    ${showMoreModal ? renderMoreModal() : ''}
+    ${showImportModal ? renderImportModal() : ''}
+    ${showExportModal ? renderExportModal() : ''}
+    ${showSetupTTModal ? renderSetupTTModal() : ''}
+    ${showSetupTaskModal ? renderSetupTaskModal() : ''}
+    ${showRemoveTaskModal ? renderRemoveTaskModal() : ''}
+    ${showTodoModal ? renderTodoModal() : ''}
+    ${showResetConfirmModal ? renderResetConfirmModal() : ''}
+  `;
+
+  const todayList = document.getElementById('todayList');
+  todayDayTasks.forEach(t=>{
+    const isDone = !!daysLog[todayKey].tasks[t.id];
+    const row = document.createElement('div');
+    row.className = 'task' + (isDone ? ' done' : '');
+    row.innerHTML = `<div class="checkbox"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="#0d2338" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="task-name">${t.name}</div>`;
+    row.addEventListener('click', ()=>toggleTodayTask(t.id));
+    todayList.appendChild(row);
+  });
+
+  if(catchupKey){
+    const catchupList = document.getElementById('catchupList');
+    if(!daysLog[catchupKey]) daysLog[catchupKey] = { tasks:{}, note:'' };
+    catchupTasks.forEach(t=>{
+      const isDone = !!daysLog[catchupKey].tasks[t.id];
+      const row = document.createElement('div');
+      row.className = 'task' + (isDone ? ' done' : '');
+      row.innerHTML = `<div class="checkbox"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="#0d2338" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="task-name">${t.name}</div>`;
+      row.addEventListener('click', ()=>toggleCatchupTask(t.id));
+      catchupList.appendChild(row);
+    });
+  }
+
+  const historyLog = document.getElementById('historyLog');
+  const pastEntries = historyEntries.filter(k => k !== todayKey);
+  if(pastEntries.length === 0){
+    historyLog.innerHTML = `<div class="history-row"><span>No days logged yet.</span></div>`;
+  } else {
+    pastEntries.forEach(key=>{
+      const status = finalizedStatus[key] || 'pending';
+      const d = parseDateKey(key);
+      const iconMap = { completed:'\u2713', restored:'\u21BB', missed:'\u2715', pending:'\u2026' };
+      const labelMap = { completed:'Completed', restored:'Restored (token used)', missed:'Missed', pending:'Pending' };
+      const row = document.createElement('div');
+      row.className = 'history-row';
+      row.innerHTML = `<span>${fmtShort(d)}</span><span class="icon ${status}">${iconMap[status]} ${labelMap[status]}</span>`;
+      historyLog.appendChild(row);
+    });
+  }
+
+  document.getElementById('badgeBtn').addEventListener('click', toggleModal);
+  document.getElementById('ttBtn').addEventListener('click', toggleTimetableModal);
+  document.getElementById('moreBtn').addEventListener('click', toggleMoreModal);
+  document.getElementById('todoBtn').addEventListener('click', toggleTodoModal);
+  document.getElementById('settingsGear').addEventListener('click', toggleSettingsMenu);
+  if(showSettingsMenu){
+    document.getElementById('menuImport').addEventListener('click', openImportModal);
+    document.getElementById('menuExport').addEventListener('click', openExportModal);
+    document.getElementById('menuSetupTT').addEventListener('click', openSetupTimetable);
+    document.getElementById('menuSetupTask').addEventListener('click', openSetupTaskModal);
+    document.getElementById('menuRemoveTask').addEventListener('click', openRemoveTaskModal);
+    document.getElementById('menuResetProgress').addEventListener('click', ()=> openResetConfirm('progress'));
+    document.getElementById('menuResetAll').addEventListener('click', ()=> openResetConfirm('all'));
+  }
+  if(showResetConfirmModal){
+    document.getElementById('resetConfirmYes').addEventListener('click', confirmReset);
+    document.getElementById('resetConfirmNo').addEventListener('click', cancelResetConfirm);
+  }
+  if(showModal){
+    document.getElementById('modalClose').addEventListener('click', toggleModal);
+    document.getElementById('modalOverlay').addEventListener('click', (e)=>{
+      if(e.target.id === 'modalOverlay') toggleModal();
+    });
+    document.getElementById('divisionsBtn').addEventListener('click', toggleDivisions);
+  }
+  if(showTimetableModal){
+    document.getElementById('ttModalClose').addEventListener('click', toggleTimetableModal);
+    document.getElementById('ttModalOverlay').addEventListener('click', (e)=>{
+      if(e.target.id === 'ttModalOverlay') toggleTimetableModal();
+    });
+    document.querySelectorAll('.day-tab').forEach(tab=>{
+      tab.addEventListener('click', ()=> setTTDay(parseInt(tab.dataset.day)));
+    });
+  }
+  if(showMoreModal){
+    document.getElementById('moreModalClose').addEventListener('click', toggleMoreModal);
+    document.getElementById('moreModalOverlay').addEventListener('click', (e)=>{
+      if(e.target.id === 'moreModalOverlay') toggleMoreModal();
+    });
+    if(selectedMoreTaskId === null){
+      document.querySelectorAll('.more-task-row').forEach(row=>{
+        row.addEventListener('click', ()=> openMoreTaskDetail(row.dataset.taskId));
+      });
+      document.querySelectorAll('.edit-task-btn').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          openEditTask(btn.dataset.taskId);
+        });
+      });
+    } else {
+      const backBtn = document.getElementById('moreBackBtn');
+      if(backBtn) backBtn.addEventListener('click', backToMoreList);
+      document.querySelectorAll('.more-day-tab').forEach(tab=>{
+        tab.addEventListener('click', ()=> setMoreDay(parseInt(tab.dataset.day)));
+      });
+      const monthlyBackBtn = document.getElementById('monthlyDayBackBtn');
+      if(monthlyBackBtn) monthlyBackBtn.addEventListener('click', backToMonthlyDayList);
+      document.querySelectorAll('.monthly-day-checkbox').forEach(box=>{
+        box.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          toggleMonthlyDayComplete(selectedMoreTaskId, parseInt(box.dataset.dayNum));
+        });
+      });
+      document.querySelectorAll('.monthly-day-row').forEach(row=>{
+        row.addEventListener('click', ()=> openMonthlyDayDetail(parseInt(row.dataset.dayNum)));
+      });
+    }
+  }
+  if(showImportModal){
+    document.getElementById('importModalClose').addEventListener('click', closeAllSettingsModals);
+    document.getElementById('importConfirmBtn').addEventListener('click', confirmImport);
+  }
+  if(showExportModal){
+    document.getElementById('exportModalClose').addEventListener('click', closeAllSettingsModals);
+    document.getElementById('exportCopyBtn').addEventListener('click', ()=>{
+      const box = document.getElementById('exportBox');
+      box.select();
+      try{ navigator.clipboard.writeText(box.value); }catch(e){ document.execCommand('copy'); }
+    });
+  }
+  if(showSetupTTModal){
+    document.getElementById('setupTTClose').addEventListener('click', closeAllSettingsModals);
+    document.getElementById('setupTTSave').addEventListener('click', saveSetupTimetable);
+    document.getElementById('clearTTDayBtn').addEventListener('click', clearSetupTimetableDay);
+    document.querySelectorAll('.setup-day-tab').forEach(tab=>{
+      tab.addEventListener('click', ()=> setSetupTTDay(parseInt(tab.dataset.day)));
+    });
+  }
+  if(showSetupTaskModal){
+    document.getElementById('setupTaskClose').addEventListener('click', closeAllSettingsModals);
+    document.getElementById('saveNewTaskBtn').addEventListener('click', saveNewTask);
+    document.getElementById('typeWeeklyBtn').addEventListener('click', ()=> setNewTaskType('weekly'));
+    document.getElementById('typeMonthlyBtn').addEventListener('click', ()=> setNewTaskType('monthly'));
+    document.getElementById('parseNewTaskBtn').addEventListener('click', parseNewTaskPaste);
+    if(newTaskType === 'weekly'){
+      document.querySelectorAll('.new-task-day-tab').forEach(tab=>{
+        tab.addEventListener('click', ()=> setNewTaskDay(parseInt(tab.dataset.day)));
+      });
+    }
+  }
+  if(showRemoveTaskModal){
+    document.getElementById('removeTaskClose').addEventListener('click', closeAllSettingsModals);
+    document.querySelectorAll('.remove-task-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=> removeCustomTask(btn.dataset.taskId));
+    });
+  }
+  if(showTodoModal){
+    document.getElementById('todoModalClose').addEventListener('click', toggleTodoModal);
+    document.getElementById('todoModalOverlay').addEventListener('click', (e)=>{
+      if(e.target.id === 'todoModalOverlay') toggleTodoModal();
+    });
+    document.getElementById('addTodoBtn').addEventListener('click', addTodoItem);
+    document.querySelectorAll('.todo-checkbox').forEach(box=>{
+      box.addEventListener('click', ()=> toggleTodoItem(box.dataset.todoId));
+    });
+    document.querySelectorAll('.todo-remove-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=> removeTodoItem(btn.dataset.todoId));
+    });
+    document.querySelectorAll('.todo-edit-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=> startEditTodo(btn.dataset.todoId));
+    });
+    document.querySelectorAll('.edit-todo-save-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=> saveEditTodo(btn.dataset.todoId));
+    });
+    // Drag-to-reorder for the personal to-do list
+    document.querySelectorAll('.todo-row[draggable="true"]').forEach(row=>{
+      row.addEventListener('dragstart', ()=> todoDragStart(row.dataset.todoId));
+      row.addEventListener('dragend', todoDragEnd);
+      row.addEventListener('dragover', (e)=>{
+        e.preventDefault();
+        const rect = row.getBoundingClientRect();
+        const isBelow = (e.clientY - rect.top) > rect.height / 2;
+        row.classList.toggle('drag-over-bottom', isBelow);
+        row.classList.toggle('drag-over-top', !isBelow);
+      });
+      row.addEventListener('dragleave', ()=>{
+        row.classList.remove('drag-over-top','drag-over-bottom');
+      });
+      row.addEventListener('drop', (e)=>{
+        e.preventDefault();
+        const position = row.classList.contains('drag-over-bottom') ? 'below' : 'above';
+        todoReorder(row.dataset.todoId, position);
+        todoDragEnd();
+      });
+    });
+    // "From Timetable" section: generic per-date task ticking + inline edit
+    document.querySelectorAll('.from-tt-checkbox').forEach(box=>{
+      box.addEventListener('click', ()=> toggleAnyDayTask(box.dataset.dateKey, box.dataset.taskId));
+    });
+    document.querySelectorAll('.from-tt-edit-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const labelEl = btn.closest('.from-tt-row').querySelector('.task-name');
+        startEditFromTT(btn.dataset.editKey, labelEl ? labelEl.textContent : '');
+      });
+    });
+    document.querySelectorAll('.edit-fromtt-save-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=> saveEditFromTT(btn.dataset.editKey));
+    });
+  }
+}
+
+function renderTimetableModal(){
+  const dayOrder = [1,2,3,4,5,6,0]; // Mon..Sun for tab display order
+  const dayShort = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  const tabs = dayOrder.map(d=>`<div class="day-tab ${d===selectedTTDay?'active':''}" data-day="${d}">${dayShort[d]}</div>`).join('');
+
+  let rows;
+  if(customTimetable && customTimetable[selectedTTDay]){
+    rows = SETUP_SLOTS.map(([s,e], i)=>{
+      const label = customTimetable[selectedTTDay][i] || '';
+      return `
+        <div class="tt-row">
+          <div class="tt-dot" style="background:${label ? '#6fa8dc' : 'transparent'}"></div>
+          <div class="tt-time">${fmtTime12(s)} \u2013 ${fmtTime12(e)}</div>
+          <div class="tt-activity">${label || 'Free / Buffer'}</div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    rows = TIMETABLE[selectedTTDay].map(([s,e,label])=>{
+      const color = TIMETABLE_COLORS[label] || '#8fadc4';
+      return `
+        <div class="tt-row">
+          <div class="tt-dot" style="background:${color}"></div>
+          <div class="tt-time">${fmtTime12(s)} \u2013 ${fmtTime12(e)}</div>
+          <div class="tt-activity">${label}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  return `
+    <div class="modal-overlay" id="ttModalOverlay">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h2>Weekly Timetable</h2>
+          <div class="modal-close" id="ttModalClose">CLOSE \u2715</div>
+        </div>
+        <div class="modal-body">
+          <div class="day-tabs">${tabs}</div>
+          <div>${rows}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderImportModal(){
+  return `
+    <div class="modal-overlay" id="importOverlay">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h2>Import Data</h2>
+          <div class="modal-close" id="importModalClose">CLOSE \u2715</div>
+        </div>
+        <div class="modal-body">
+          <p class="section-label">PASTE YOUR EXPORT CODE BELOW</p>
+          <textarea class="code-box" id="importBox" placeholder="Paste code here..."></textarea>
+          <div class="btn primary save-setup-btn" id="importConfirmBtn">Import &amp; Overwrite</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderExportModal(){
+  return `
+    <div class="modal-overlay" id="exportOverlay">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h2>Export Data</h2>
+          <div class="modal-close" id="exportModalClose">CLOSE \u2715</div>
+        </div>
+        <div class="modal-body">
+          <p class="section-label">COPY THIS CODE TO YOUR OTHER DEVICE</p>
+          <textarea class="code-box" id="exportBox" readonly>${exportText}</textarea>
+          <div class="btn primary save-setup-btn" id="exportCopyBtn">Copy Code</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderSetupTTModal(){
+  const dayOrder = [1,2,3,4,5,6,0];
+  const dayShort = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const tabs = dayOrder.map(d=>`<div class="day-tab setup-day-tab ${d===setupSelectedDay?'active':''}" data-day="${d}">${dayShort[d]}</div>`).join('');
+
+  const slotRows = SETUP_SLOTS.map(([s,e], i)=>{
+    const val = draftTimetable[setupSelectedDay][i] || '';
+    return `
+      <div class="setup-slot-row">
+        <div class="setup-slot-time">${fmtTime12(s)}-${fmtTime12(e)}</div>
+        <input class="setup-input" data-slot="${i}" value="${val.replace(/"/g,'&quot;')}" placeholder="Leave blank for buffer">
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="modal-overlay" id="setupTTOverlay">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h2>Setup My Schedule</h2>
+          <div class="modal-close" id="setupTTClose">CLOSE \u2715</div>
+        </div>
+        <div class="modal-body">
+          <div class="day-tabs">${tabs}</div>
+          <div class="trash-row">
+            <div class="btn danger" id="clearTTDayBtn">\u{1F5D1}\uFE0F Clear This Day</div>
+          </div>
+          <div>${slotRows}</div>
+          <div class="btn primary save-setup-btn" id="setupTTSave">Save Schedule</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderSetupTaskModal(){
+  const dayOrder = [1,2,3,4,5,6,0];
+  const dayShort = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const tabs = dayOrder.map(d=>`<div class="day-tab new-task-day-tab ${d===setupSelectedDay?'active':''}" data-day="${d}">${dayShort[d]}</div>`).join('');
+
+  const weeklyTemplate = `Day 1 \u2014 Push
+- Bench Press \u2014 4x10
+- Overhead Press \u2014 3x12
+
+Day 2 \u2014 Pull
+- Pull-ups \u2014 4xMax
+
+Day 6 \u2014 Rest
+Day 7 \u2014 Rest`;
+
+  const monthlyTemplate = `Day 1 \u2014 Sketch + Basic Extrude
+- Learn sketch constraints
+- Practice extrude/revolve
+
+Day 30 \u2014 Assemblies
+- Mates and constraints
+- Exploded views
+
+Day 100 \u2014 Surfacing
+- Advanced surface tools`;
+
+  let contentHtml;
+  if(newTaskType === 'weekly'){
+    const blockDraft = draftWeeklyTask.weeklyBlocks[setupSelectedDay];
+    const itemsPreview = blockDraft.rest
+      ? `<div class="gym-rest" style="padding:12px 0;">Marked as rest / off day</div>`
+      : (blockDraft.items.length
+          ? blockDraft.items.map(it=>`<div class="gym-row"><div class="gym-name">${it.name}</div><div class="gym-detail">${it.detail}</div></div>`).join('')
+          : `<div class="gym-rest" style="padding:12px 0; font-size:11px;">Nothing set for this day yet \u2014 use Paste &amp; Parse below</div>`);
+    contentHtml = `
+      <p class="section-label" style="margin-top:12px;">PREVIEW BY DAY (READ-ONLY \u2014 FILL VIA PASTE &amp; PARSE BELOW)</p>
+      <div class="day-tabs">${tabs}</div>
+      ${blockDraft.title ? `<div class="gym-day-title">${blockDraft.title}</div>` : ''}
+      <div>${itemsPreview}</div>
+      <div class="paste-parse-box">
+        <p class="section-label">PASTE &amp; PARSE</p>
+        <div class="sample-template">${weeklyTemplate}</div>
+        <textarea class="code-box" id="newTaskPasteBox" placeholder="Paste your AI-formatted weekly plan here..."></textarea>
+        <div class="btn tt-btn save-setup-btn" id="parseNewTaskBtn">Parse &amp; Fill</div>
+      </div>
+    `;
+  } else {
+    const keys = Object.keys(draftWeeklyTask.monthlyBlocks).map(Number).sort((a,b)=>a-b);
+    const preview = keys.length === 0
+      ? `<div class="gym-rest" style="padding:12px 0; font-size:11px;">No milestones set yet \u2014 use Paste &amp; Parse below</div>`
+      : keys.map(k=>{
+          const b = draftWeeklyTask.monthlyBlocks[k];
+          return `<div class="gym-row"><div class="gym-name">Day ${k}${b.title ? ' \u2014 '+b.title : ''}</div><div class="gym-detail">${b.items.length} item(s)</div></div>`;
+        }).join('');
+    contentHtml = `
+      <p class="section-label" style="margin-top:12px;">START DATE (DAY 1 OF THIS TASK)</p>
+      <input type="date" class="setup-input" id="newTaskStartDate" value="${draftWeeklyTask.startDate}">
+      <p class="section-label" style="margin-top:12px;">MILESTONES SET SO FAR</p>
+      <div>${preview}</div>
+      <div class="paste-parse-box">
+        <p class="section-label">PASTE &amp; PARSE (ANY DAY NUMBER \u2014 1, 30, 100, 216...)</p>
+        <div class="sample-template">${monthlyTemplate}</div>
+        <textarea class="code-box" id="newTaskPasteBox" placeholder="Paste your AI-formatted roadmap here..."></textarea>
+        <div class="btn tt-btn save-setup-btn" id="parseNewTaskBtn">Parse &amp; Fill</div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="modal-overlay" id="setupTaskOverlay">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h2>${editingTaskId ? 'Edit Task' : 'Setup New Task'}</h2>
+          <div class="modal-close" id="setupTaskClose">CLOSE \u2715</div>
+        </div>
+        <div class="modal-body">
+          <p class="section-label">TASK TITLE</p>
+          <input class="setup-day-title-input" id="newTaskTitle" value="${(draftWeeklyTask.title||'').replace(/"/g,'&quot;')}" placeholder="e.g. Gym, SolidWorks Roadmap, Gaming">
+          <p class="section-label">TASK TYPE</p>
+          <div class="block-controls">
+            <div class="btn ${newTaskType==='weekly'?'primary':'tt-btn'}" id="typeWeeklyBtn">Weekly (repeats every 7 days)</div>
+            <div class="btn ${newTaskType==='monthly'?'primary':'tt-btn'}" id="typeMonthlyBtn">Monthly (milestones by day count)</div>
+          </div>
+          ${contentHtml}
+          <div class="btn primary save-setup-btn" id="saveNewTaskBtn">${editingTaskId ? 'Save Changes' : 'Save Task'}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderMoreModal(){
+  if(selectedMoreTaskId === null){
+    const rows = customTasks.map(t=>`
+      <div class="gym-row more-task-row" data-task-id="${t.id}" style="cursor:pointer;">
+        <div class="gym-name">${t.title}</div>
+        <div class="gym-detail">${t.type === 'weekly' ? 'Weekly' : 'Monthly'}</div>
+        <div class="edit-task-btn" data-task-id="${t.id}" title="Edit">${PENCIL_SVG}</div>
+      </div>
+    `).join('') || `<div class="gym-rest">No scheduled tasks yet. Add one via Settings \u2192 Setup New Task.</div>`;
+    return `
+      <div class="modal-overlay" id="moreModalOverlay">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h2>More</h2>
+            <div class="modal-close" id="moreModalClose">CLOSE \u2715</div>
+          </div>
+          <div class="modal-body">
+            <p class="section-label">SCHEDULED TASKS (REFERENCE ONLY)</p>
+            <div>${rows}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  const task = customTasks.find(t=>t.id===selectedMoreTaskId);
+  let bodyHtml;
+  if(task.type === 'weekly'){
+    const dayOrder = [1,2,3,4,5,6,0];
+    const dayShort = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const tabs = dayOrder.map(d=>`<div class="day-tab more-day-tab ${d===moreSelectedDay?'active':''}" data-day="${d}">${dayShort[d]}</div>`).join('');
+    const block = task.weeklyBlocks[moreSelectedDay];
+    const itemsHtml = block.rest
+      ? `<div class="gym-rest">\u{1F634} Rest Day</div>`
+      : (block.items.length
+          ? block.items.map(it=>`<div class="gym-row"><div class="gym-name">${it.name}</div><div class="gym-detail">${it.detail}</div></div>`).join('')
+          : `<div class="gym-rest">Nothing set for this day</div>`);
+    bodyHtml = `
+      <div class="day-tabs">${tabs}</div>
+      ${block.title ? `<div class="gym-day-title">${block.title}</div>` : ''}
+      <div>${itemsHtml}</div>
+    `;
+  } else {
+    const keys = Object.keys(task.monthlyBlocks).map(Number).sort((a,b)=>a-b);
+    const maxDay = keys.length ? Math.max(...keys) : 0;
+
+    if(moreMonthlyDayDetail !== null){
+      // Detail view for one specific day
+      const dayNum = moreMonthlyDayDetail;
+      const milestone = milestoneForDayNumber(task, dayNum);
+      const dateStr = formatDMY(dateForDayNumber(task.startDate, dayNum));
+      const itemsHtml = milestone && milestone.items.length
+        ? milestone.items.map(it=>`<div class="gym-row"><div class="gym-name">\u2022 ${it.name}${it.detail ? ' \u2014 '+it.detail : ''}</div></div>`).join('')
+        : `<div class="gym-rest">No details set for this day.</div>`;
+      bodyHtml = `
+        <div class="btn tt-btn" id="monthlyDayBackBtn" style="margin-bottom:12px;">\u2190 Back to Day List</div>
+        <div class="gym-day-title">Day ${dayNum} \u2014 (${dateStr}) ${milestone ? milestone.title : ''}</div>
+        <div>${itemsHtml}</div>
+      `;
+    } else if(maxDay === 0){
+      bodyHtml = `<div class="gym-rest">No milestones set. Add some via Setup New Task.</div>`;
+    } else {
+      // Checklist of every single day, 1 through maxDay
+      const dayRows = [];
+      for(let n=1; n<=maxDay; n++){
+        const milestone = milestoneForDayNumber(task, n);
+        const dateStr = formatDMY(dateForDayNumber(task.startDate, n));
+        const isDone = !!task.monthlyCompletedDays[n];
+        dayRows.push(`
+          <div class="task monthly-day-row ${isDone ? 'done' : ''}" data-day-num="${n}">
+            <div class="checkbox monthly-day-checkbox" data-day-num="${n}">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="#0d2338" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="task-text">
+              <div class="task-name" style="font-size:13px;">Day ${n} (${dateStr}) - ${milestone ? milestone.title : ''}</div>
+            </div>
+          </div>
+        `);
+      }
+      bodyHtml = `
+        <p class="section-label">STARTED ${task.startDate} &middot; TAP A ROW TO VIEW DETAILS, TAP THE BOX TO MARK DONE</p>
+        <div>${dayRows.join('')}</div>
+      `;
+    }
+  }
+
+  return `
+    <div class="modal-overlay" id="moreModalOverlay">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h2>${task.title}</h2>
+          <div class="modal-close" id="moreModalClose">CLOSE \u2715</div>
+        </div>
+        <div class="modal-body">
+          <div class="btn tt-btn" id="moreBackBtn" style="margin-bottom:12px;">\u2190 Back to List</div>
+          ${bodyHtml}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderRemoveTaskModal(){
+  const rows = customTasks.length === 0
+    ? `<div class="gym-rest">No custom tasks added yet.</div>`
+    : customTasks.map(t=>`
+        <div class="gym-row">
+          <div class="gym-name">${t.title} <span style="color:var(--text-muted); font-size:10px;">(${t.type})</span></div>
+          <div class="btn danger remove-task-btn" data-task-id="${t.id}" style="padding:5px 10px; font-size:10px;">Remove</div>
+        </div>
+      `).join('');
+
+  return `
+    <div class="modal-overlay" id="removeTaskOverlay">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h2>Remove Task</h2>
+          <div class="modal-close" id="removeTaskClose">CLOSE \u2715</div>
+        </div>
+        <div class="modal-body">
+          <p class="section-label">TIMETABLE-DERIVED TASKS ARE EDITED VIA "SETUP MY SCHEDULE" &mdash; ONLY CUSTOM TASKS CAN BE REMOVED HERE</p>
+          <div>${rows}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderTodoModal(){
+  const rows = todoList.length === 0
+    ? `<div class="gym-rest">Nothing on your to-do list yet.</div>`
+    : todoList.map((item)=>{
+        if(editingTodoId === item.id){
+          return `
+            <div class="setup-gym-row" style="margin-bottom:8px;">
+              <input class="setup-input" id="editTodoInput_${item.id}" value="${item.text.replace(/"/g,'&quot;')}">
+              <div class="btn primary edit-todo-save-btn" data-todo-id="${item.id}" style="flex:0 0 60px;">Save</div>
+            </div>
+          `;
+        }
+        return `
+        <div class="task todo-row ${item.done ? 'done' : ''}" draggable="true" data-todo-id="${item.id}">
+          <div class="drag-handle" title="Drag to reorder">\u22EE\u22EE</div>
+          <div class="checkbox todo-checkbox" data-todo-id="${item.id}">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="#0d2338" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="task-text">
+            <div class="task-name" style="font-size:14px;">${item.text}</div>
+          </div>
+          <div class="edit-task-btn todo-edit-btn" data-todo-id="${item.id}" title="Edit">${PENCIL_SVG}</div>
+          <div class="btn danger todo-remove-btn" data-todo-id="${item.id}" style="flex:0 0 auto; padding:4px 8px; font-size:10px;">\u2715</div>
+        </div>
+      `;
+      }).join('');
+
+  // "From Timetable" - only PAST, already-finalized missed days (never today,
+  // since today isn't over yet). Covers every day still sitting in the
+  // catch-up queue, oldest first. Shows ALL of that day's required tasks
+  // (ticked ones stay visible, checked) - the whole day's block only
+  // disappears once it's fully resolved and leaves the queue.
+  const fromTimetableItems = [];
+  missedQueue.forEach(dateKeyStr=>{
+    const dayEntry = daysLog[dateKeyStr] || { tasks:{}, note:'' };
+    const d = parseDateKey(dateKeyStr);
+    const req = tasksForDay(d.getDay());
+    const dayLabel = `${DAY_NAMES[d.getDay()].slice(0,3)}, ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
+    req.forEach(t=>{
+      const editKey = `${dateKeyStr}_${t.id}`;
+      const customText = fromTimetableEdits[editKey];
+      fromTimetableItems.push({
+        editKey, dateKeyStr, taskId: t.id,
+        isDone: !!dayEntry.tasks[t.id],
+        label: customText || `${dayLabel} - ${t.name}`
+      });
+    });
+  });
+
+  const fromTimetableHtml = fromTimetableItems.length === 0
+    ? `<div class="gym-rest" style="padding:10px 0; font-size:11px;">Nothing outstanding from previous days.</div>`
+    : fromTimetableItems.map(it=>{
+        if(editingFromTTKey === it.editKey){
+          return `
+            <div class="setup-gym-row" style="margin-bottom:8px;">
+              <input class="setup-input" id="editFromTT_${it.editKey}" value="${it.label.replace(/"/g,'&quot;')}">
+              <div class="btn primary edit-fromtt-save-btn" data-edit-key="${it.editKey}" style="flex:0 0 60px;">Save</div>
+            </div>
+          `;
+        }
+        return `
+        <div class="task from-tt-row ${it.isDone ? 'done' : ''}">
+          <div class="checkbox from-tt-checkbox" data-date-key="${it.dateKeyStr}" data-task-id="${it.taskId}">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="#0d2338" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="task-text">
+            <div class="task-name" style="font-size:13px;">${it.label}</div>
+          </div>
+          <div class="edit-task-btn from-tt-edit-btn" data-edit-key="${it.editKey}" title="Edit">${PENCIL_SVG}</div>
+        </div>
+      `;
+      }).join('');
+
+  return `
+    <div class="modal-overlay" id="todoModalOverlay">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h2>To Do List</h2>
+          <div class="modal-close" id="todoModalClose">CLOSE \u2715</div>
+        </div>
+        <div class="modal-body">
+          <p class="section-label">ROUGH &amp; FLEXIBLE &mdash; JUST FOR YOUR OWN RECORD, NOT PART OF YOUR STREAK</p>
+          <div class="setup-gym-row">
+            <input class="setup-input" id="newTodoInput" placeholder="Add something...">
+            <div class="btn primary" id="addTodoBtn" style="flex:0 0 70px;">Add</div>
+          </div>
+          <div id="todoRowsContainer">${rows}</div>
+
+          <p class="section-label from-tt-heading">FROM TIMETABLE</p>
+          <div>${fromTimetableHtml}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderResetConfirmModal(){
+  const isProgressOnly = resetMode === 'progress';
+  const titleColor = isProgressOnly ? 'var(--amber)' : 'var(--red-stamp)';
+  const title = isProgressOnly ? 'Reset Progress Only?' : 'Reset All Data?';
+  const bodyText = isProgressOnly
+    ? 'This will permanently erase your streak, history, best rank, and unlocked badges, resetting you back to Day 0. Your custom timetable, custom tasks, and to-do list will be kept exactly as they are. This cannot be undone.'
+    : 'This will permanently erase your entire streak, history, best rank, unlocked badges, custom timetable, custom tasks, and to-do list. This cannot be undone.';
+  const confirmLabel = isProgressOnly ? 'Yes, Reset Progress' : 'Yes, Reset Everything';
+
+  return `
+    <div class="modal-overlay" id="resetConfirmOverlay">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h2 style="color:${titleColor};">${title}</h2>
+        </div>
+        <div class="modal-body">
+          <p style="font-family:'Inter', sans-serif; font-size:13px; line-height:1.6; margin-bottom:16px;">
+            ${bodyText}
+          </p>
+          <div class="block-controls">
+            <div class="btn danger" id="resetConfirmYes" style="border-color:${titleColor}; color:${titleColor};">${confirmLabel}</div>
+            <div class="btn tt-btn" id="resetConfirmNo">Cancel</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderModal(currentStreak){
+  const league = getLeague(currentStreak, reachedPlatinumFloor);
+  const leagueIdx = LEAGUES.indexOf(league);
+  const nextLeague = LEAGUES[leagueIdx+1];
+  const progressPct = nextLeague ? Math.min(100, Math.round(((currentStreak - league.min)/(league.max - league.min))*100)) : 100;
+  const bestLeague = LEAGUES[bestLeagueIndex];
+
+  const badgeCards = BADGES.map(b=>{
+    const unlocked = bestStreak >= b.threshold;
+    return `
+      <div class="badge-card ${unlocked ? 'unlocked' : 'locked'}">
+        <span class="badge-emoji">${b.emoji}</span>
+        <div class="badge-text">
+          <div class="badge-name">${b.name}</div>
+          <div class="badge-threshold">Achieve a ${b.threshold}-day streak</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const divisionsRows = LEAGUES.map(l=>{
+    const rangeText = l.max === Infinity ? `${l.min}+` : `${l.min}\u2013${l.max-1}`;
+    return `
+      <div class="div-row">
+        <span class="div-swatch" style="background:${l.color}"></span>
+        <span class="div-name" style="color:${l.color}">${l.name} ${l.div ? `<span class="div-pips">${pipsFor(l.div)}</span>` : ''}</span>
+        <span class="div-range">${rangeText}d</span>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="modal-overlay" id="modalOverlay">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h2>Badges &amp; League</h2>
+          <div class="modal-close" id="modalClose">CLOSE \u2715</div>
+        </div>
+        <div class="modal-body">
+          <div class="league-card">
+            <div class="league-sub">CURRENT LEAGUE</div>
+            <div class="league-name" style="color:${league.color}">${league.tier}${league.div ? ` <span class="league-pips">${pipsFor(league.div)}</span>` : ''}</div>
+            <div class="league-sub">${currentStreak}-day streak${nextLeague ? ` &middot; ${Math.max(0, nextLeague.min - currentStreak)} days to ${nextLeague.name}` : ' &middot; Top division'}</div>
+            <div class="league-progress-track"><div class="league-progress-fill" style="width:${progressPct}%; background:${league.color}"></div></div>
+            <div class="btn tt-btn" id="divisionsBtn" style="margin-top:10px;">See All Divisions</div>
+            ${showDivisions ? `<div class="divisions-table">${divisionsRows}</div>` : ''}
+          </div>
+          <div class="best-streak-row">
+            <span>\u{1F525} BEST STREAK</span>
+            <span class="num">${bestStreak} days</span>
+          </div>
+          <div class="best-streak-row">
+            <span>\u{1F3C5} BEST RANK</span>
+            <span class="num" style="color:${bestLeague.color}">${bestLeague.tier}${bestLeague.div ? ` ${bestLeague.div}` : ''}</span>
+          </div>
+          <p class="section-label">BADGES (BASED ON YOUR BEST-EVER STREAK)</p>
+          <div class="badges-grid">${badgeCards}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+render();
+</script>
+<script>
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed', err));
+    });
+  }
+</script>
+</body>
+</html>
